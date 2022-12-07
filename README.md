@@ -3,4 +3,4 @@
 javac smoothmain.java
 java smoothmain
 ```
-!(img.png)
+![](img.png)
