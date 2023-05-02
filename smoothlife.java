@@ -1,8 +1,13 @@
 import java.util.Random;
+import java.util.stream.Stream;
 import java.awt.Graphics;
 import java.awt.Color;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
 
-public class smoothlife {
+public final class smoothlife {
     int height;
     int width;
     double[][] state;
@@ -21,6 +26,9 @@ public class smoothlife {
     double[][] ker_r;
     Color[] arr_clr;
     Random rand=new Random();
+    int[][][] coord;
+    ArrayList<int[][]> coordList;
+
     smoothlife(int ri,int ra,double b1,double b2,
     double d1,double d2,double am,double an,
     double dt,int h,int w,int ps){
@@ -40,6 +48,19 @@ public class smoothlife {
         for(int i=0;i<256;i++){
             arr_clr[i]=new Color(i,i,i);
         }
+        coord=make_coord(height,width);
+        coordList=new ArrayList<int[][]>(Arrays.asList(coord));
+        //coordStream=coordList.parallelStream();
+    }
+    int[][][] make_coord(int h,int w){
+        int[][][] cd=new int[h][w][2];
+        for (int i=0;i<h;i++){
+            for(int j=0;j<w;j++){
+                cd[i][j][0]=i;
+                cd[i][j][1]=j;
+            }
+        }
+        return cd;
     }
 
     double[][] zero_arr_d(int h,int w){
@@ -203,26 +224,29 @@ public class smoothlife {
     }
 
     void calc_update(){
-        double m;
-        double n;
-        double S;
         int h=this.height;
         int w=this.width;
-        for(int i=0;i<h;i++){
-            for(int j=0;j<w;j++){
-                m=calc_conv_p(state,ker_d,ri,j,i);
-                n=calc_conv_p(state,ker_r,ra,j,i);
-                S=s(n,m);
-                mem[i][j]=S;//state[i][j]+dt*(2*S-1);
-                //if(S<-1){printd(S);}
-                if(mem[i][j]<0){
-                    mem[i][j]=0;
-                }else if(mem[i][j]>1){
-                    mem[i][j]=1;
+        //List<int[][]> clis = new ArrayList<int[][]>(Arrays.asList(coord));
+        coordList.parallelStream().forEach(
+            arr->{
+                double m;
+                double n;
+                double S;
+                for(int j=0;j<w;j++){
+                    m=calc_conv_p(state,ker_d,ri,arr[j][1],arr[j][0]);
+                    n=calc_conv_p(state,ker_r,ra,arr[j][1],arr[j][0]);
+                    S=s(n,m);
+                    mem[arr[j][0]][arr[j][1]]=S;//state[i][j]+dt*(2*S-1);
+                    //if(S<-1){printd(S);}
+                    if(mem[arr[j][0]][arr[j][1]]<0){
+                        mem[arr[j][0]][arr[j][1]]=0;
+                    }else if(mem[arr[j][0]][arr[j][1]]>1){
+                        mem[arr[j][0]][arr[j][1]]=1;
+                    } 
                 }
-
             }
-        }
+        );
+        
     }
 
     void state_update(){
